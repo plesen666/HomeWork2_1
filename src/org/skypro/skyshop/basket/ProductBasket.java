@@ -86,6 +86,6 @@ public class ProductBasket {
         quantityProduct = 0;
         products.clear();
         //  Arrays.fill(products, null);
-        System.out.println("Корзина очищена ");
+        System.out.println("Корзина очищена");
     }
 }

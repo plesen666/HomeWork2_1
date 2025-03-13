@@ -1,0 +1,372 @@
+Index: .idea/.gitignore
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+deleted file mode 100644
+--- a/.idea/.gitignore	(revision 138d38448efe0fc170af7c81e1a22883dae8ce7b)
++++ /dev/null	(revision 138d38448efe0fc170af7c81e1a22883dae8ce7b)
+@@ -1,10 +0,0 @@
+-# Default ignored files
+-/shelf/
+-/workspace.xml
+-.idea
+-*.iml
+-# Editor-based HTTP Client requests
+-/httpRequests/
+-# Datasource local storage ignored files
+-/dataSources/
+-/dataSources.local.xml
+Index: src/org/skypro/skyshop/product/article/Article.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/product/article/Article.java b/src/org/skypro/skyshop/product/article/Article.java
+new file mode 100644
+--- /dev/null	(date 1741901759022)
++++ b/src/org/skypro/skyshop/product/article/Article.java	(date 1741901759022)
+@@ -0,0 +1,30 @@
++package org.skypro.skyshop.product.article;
++
++import org.skypro.skyshop.product.Searchable;
++
++public class Article implements Searchable {
++    private String titleAtribute;
++    private String textAtribute;
++
++    public Article(String titleAtribute, String textAtribute) {
++        this.titleAtribute = titleAtribute;
++        this.textAtribute = textAtribute;
++    }
++
++
++    @Override
++    public String toString() {
++        return (String.format("%20s", titleAtribute) + "\n" + String.format("%27s", textAtribute));
++    }
++
++
++    @Override
++    public String getSearchTemp() {
++        return toString();
++    }
++
++    @Override
++    public String getContentType() {
++        return "ARTICLE";
++    }
++}
+\ No newline at end of file
+Index: src/org/skypro/skyshop/product/product/DiscountedProduct.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/product/product/DiscountedProduct.java b/src/org/skypro/skyshop/product/product/DiscountedProduct.java
+new file mode 100644
+--- /dev/null	(date 1741901824395)
++++ b/src/org/skypro/skyshop/product/product/DiscountedProduct.java	(date 1741901824395)
+@@ -0,0 +1,33 @@
++package org.skypro.skyshop.product.product;
++
++public class DiscountedProduct extends Product {
++    private int basePrice;
++    private int discountProcent;
++
++    public DiscountedProduct(String nameProduct, int basePrice, int discountProcent) {
++        super(nameProduct);
++        if (basePrice <= 0) {
++            throw new IllegalArgumentException("ОШИБКА В ЦЕНЕ ТОВАРА " + super.getNameProduct());
++        }
++        if (discountProcent < 0 || discountProcent > 100) {
++            throw new IllegalArgumentException("ОШИБКА В % СКИДКИ " + super.getNameProduct());
++        }
++        this.basePrice = basePrice;
++        this.discountProcent = discountProcent;
++    }
++
++    @Override
++    public int getPrice() {
++        return (int) (basePrice * (1 - discountProcent / 100f));
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%30s%20d%5s%5d%3s%23d%4s", super.getNameProduct(), basePrice, " руб", discountProcent, "%", getPrice(), "руб");
++    }
++
++    @Override
++    public boolean isSpecial() {
++        return true;
++    }
++}
+\ No newline at end of file
+Index: src/org/skypro/skyshop/ProductBasket/ProductBasket.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/ProductBasket/ProductBasket.java b/src/org/skypro/skyshop/ProductBasket/ProductBasket.java
+new file mode 100644
+--- /dev/null	(date 1741901485088)
++++ b/src/org/skypro/skyshop/ProductBasket/ProductBasket.java	(date 1741901485088)
+@@ -0,0 +1,89 @@
++package org.skypro.skyshop.basket;
++
++import org.skypro.skyshop.product.product.Product;
++
++import java.util.*;
++
++public class ProductBasket {
++    LinkedList<Product> products = new LinkedList<>();
++    // private final Product[] products = new Product[5];
++    private int quantityProduct = 0;
++
++    public void addProduct(Product titleProduct) {
++        ListIterator<Product> iteratorProduct = (ListIterator<Product>) products.iterator();
++        iteratorProduct.add(titleProduct);
++        quantityProduct++;
++        System.out.println("Продукт в корзину добавлен");
++    }
++
++    public int calculateCostBasket() {
++        int summa = 0;
++        for (Product product : products) {
++            if (product != null) {
++                summa += product.getPrice();
++            } else {
++                return summa;
++            }
++        }
++        return summa;
++    }
++
++    public void printContentBasket() {
++        int counterIsSpecial = 0;
++        if (quantityProduct == 0) {
++            System.out.println("В корзине пусто");
++        } else {
++            System.out.printf("\n%20s%23s%10s%28s", "Продукт", "Цена", "Скидка", "Итоговая цена\n");
++            for (int i = 0; i < quantityProduct; i++) {
++                if (products.get(i).isSpecial()) {
++                    counterIsSpecial++;
++                }
++                System.out.println(products.get(i));
++            }
++            System.out.printf("%20s%20d%5s", "Итого:", calculateCostBasket(), " руб");
++            System.out.printf("\n%20s%10d%5s", "Специальных товаров:", counterIsSpecial, " наименования(е)");
++        }
++    }
++
++    public List<Product> deleteProduct(String line) {
++        List<Product> delete = new ArrayList<>();
++        ListIterator<Product> iteratorDelete = (ListIterator<Product>) products.iterator();
++        if (quantityProduct == 0) {
++            System.out.println("В корзине нет продуктов");
++        } else {
++            while (iteratorDelete.hasNext()) {
++                Product c = iteratorDelete.next();
++                if (c.getNameProduct().toLowerCase().contains(line.toLowerCase().trim())) {
++                    delete.add(c);
++                    iteratorDelete.remove();
++                    quantityProduct--;
++                }
++            }
++        }
++        return delete;
++    }
++
++    public boolean checkProductAvailability(String product) {
++        if (product == null || product.isBlank()) {
++            String error = "ОШИБКА не введено название продукта для добавления в корзину ";
++            throw new IllegalArgumentException(error);
++        }
++        if (quantityProduct == 0) {
++            System.out.println("Корзина пуста");
++            return false;
++        }
++        for (int i = 0; i < quantityProduct; i++) {
++            if (product.trim().equalsIgnoreCase(products.get(i).getNameProduct().trim())) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    public void clearingBasket() {
++        quantityProduct = 0;
++        products.clear();
++        //  Arrays.fill(products, null);
++        System.out.println("Корзина очищена");
++    }
++}
+\ No newline at end of file
+Index: src/org/skypro/skyshop/Searchable.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/Searchable.java b/src/org/skypro/skyshop/Searchable.java
+new file mode 100644
+--- /dev/null	(date 1741901981989)
++++ b/src/org/skypro/skyshop/Searchable.java	(date 1741901981989)
+@@ -0,0 +1,11 @@
++package org.skypro.skyshop;
++
++public interface Searchable {
++    String getSearchTemp();
++
++    String getContentType();
++
++    default String getStringRepresentation() {
++        return String.format("%5s%20s%10s%20s", "Имя ", getSearchTemp(), " — тип - ", getContentType());
++    }
++}
+\ No newline at end of file
+Index: src/org/skypro/skyshop/ProductInformation.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/ProductInformation.java b/src/org/skypro/skyshop/ProductInformation.java
+new file mode 100644
+--- /dev/null	(date 1741901933123)
++++ b/src/org/skypro/skyshop/ProductInformation.java	(date 1741901933123)
+@@ -0,0 +1,89 @@
++package org.skypro.skyshop.product;
++
++import org.skypro.skyshop.basket.ProductBasket;
++import org.skypro.skyshop.product.article.Article;
++import org.skypro.skyshop.product.product.DiscountedProduct;
++import org.skypro.skyshop.product.product.FixPriceProduct;
++import org.skypro.skyshop.product.product.Product;
++import org.skypro.skyshop.product.product.SimpleProduct;
++
++public class ProductInformation {
++
++    public Product[] products = {
++            new SimpleProduct("Конфеты ", 800),
++            new SimpleProduct("Макароны", 80),
++            new SimpleProduct("Пельмени", 350),
++            new SimpleProduct("Масло", 120),
++            new SimpleProduct("Сосиски", 150),
++            new SimpleProduct("Кетчуп", 120),
++            new SimpleProduct("Майонез", 77),
++            new SimpleProduct("Молоко", 80),
++            new SimpleProduct("Кефир", 80),
++            new SimpleProduct("Сметана", 210),
++            new SimpleProduct("Яйца", 100),
++            new DiscountedProduct("Мыло", 23, 10),
++            new DiscountedProduct("Шампунь", 888, 10),
++            new DiscountedProduct("Стиральный порошок", 780, 15),
++            new DiscountedProduct("Пена для бритья", 455, 15),
++            new FixPriceProduct("Хлеб ржаной"),
++            new FixPriceProduct("Хлеб Бородинский"),
++            new FixPriceProduct("хлеб нарезной"),
++            new FixPriceProduct("Туалетная бумага")
++    };
++    public Article[] articles = {
++            new Article("Конфеты", "Конфеты Cладкоежка"),
++            new Article("Макароны", "Макароны Макфа"),
++            new Article("Пельмени", "Пельмени Рузские"),
++            new Article("Мaсло", "Масло Вологодское"),
++            new Article("Сосиски", "Сосиски Микояновские"),
++            new Article("Кетчуп", "Кетчуп острый"),
++            new Article("Майонез", "Майонез Провансаль"),
++            new Article("Молоко", "Молоко Рузское"),
++            new Article("Кефир", "Рузский"),
++            new Article("Сметана", "Сметана домашняя"),
++            new Article("Яйца", "Яйца куринные первой категории"),
++            new Article("Мыло", "Мыло Palmolive"),
++            new Article("Хлеб ржаной", "Хлебобулчное изделие"),
++            new Article("Хлеб Бородинский", "Хлебобулочное изделие"),
++            new Article("Батон нарезной", "Батон нарезной")
++    };
++
++    public ProductBasket basket = new ProductBasket();
++
++    public void printProductsInStore() {
++        System.out.printf("\n%30s%25s%10s%25s", "Продукт", "Цена", "Скидка", "Итоговая цена");
++        System.out.println();
++        for (Product variant : products) {
++            System.out.println(variant);
++        }
++    }
++
++    public void searchProductAddBasket(String product) {
++        if (product == null || product.isBlank()) {
++            String error = "ОШИБКА не введено название продукта для добавления в корзину ";
++            throw new IllegalArgumentException(error);
++        }
++        boolean availabilityProduct = false;
++        for (int i = 0; i < products.length; i++) {
++            if (product.trim().equalsIgnoreCase(products[i].getNameProduct().trim())) {
++                availabilityProduct = true;
++                basket.addProduct(products[i]);
++            }
++        }
++        if (!availabilityProduct) {
++            System.out.println("В магазине такого товара нет");
++        }
++    }
++
++    public void searchProductBasket(String product) {
++        if (product == null || product.isBlank()) {
++            String error = "ОШИБКА не введено название продукта для добавления в корзину ";
++            throw new IllegalArgumentException(error);
++        }
++        if (basket.checkProductAvailability(product)) {
++            System.out.println("Товар есть в корзине");
++        } else {
++            System.out.println("Товара нет в корзине");
++        }
++    }
++}
+\ No newline at end of file
+Index: src/org/skypro/skyshop/product/product/SimpleProduct.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/product/product/SimpleProduct.java b/src/org/skypro/skyshop/product/product/SimpleProduct.java
+new file mode 100644
+--- /dev/null	(date 1741901888364)
++++ b/src/org/skypro/skyshop/product/product/SimpleProduct.java	(date 1741901888364)
+@@ -0,0 +1,23 @@
++package org.skypro.skyshop.product.product;
++
++public class SimpleProduct extends Product {
++    private int price;
++
++    public SimpleProduct(String nameProduct, int price)throws IllegalArgumentException {
++        super(nameProduct);
++        if (price <= 0) {
++            throw new IllegalArgumentException("ОШИБКА В ЦЕНЕ ТОВАРА  " + super.getNameProduct());
++        }
++        this.price = price;
++    }
++
++    @Override
++    public int getPrice() {
++        return price;
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%30s%20d%5s%31d%4s", super.getNameProduct(), price, " руб", getPrice(), "руб");
++    }
++}
+\ No newline at end of file
+Index: src/org/skypro/skyshop/product/product/FixPriceProduct.java
+===================================================================
+diff --git a/src/org/skypro/skyshop/product/product/FixPriceProduct.java b/src/org/skypro/skyshop/product/product/FixPriceProduct.java
+new file mode 100644
+--- /dev/null	(date 1741901850372)
++++ b/src/org/skypro/skyshop/product/product/FixPriceProduct.java	(date 1741901850372)
+@@ -0,0 +1,24 @@
++package org.skypro.skyshop.product.product;
++
++public class FixPriceProduct extends Product {
++    private final int FIX_PRICE = 100;
++
++    public FixPriceProduct(String nameProduct) {
++        super(nameProduct);
++    }
++
++    @Override
++    public int getPrice() {
++        return FIX_PRICE;
++    }
++
++    @Override
++    public String toString() {
++        return String.format("%30s%20d%5s%23s%8d%4s", super.getNameProduct(), FIX_PRICE, " руб", "(ФИКСИРОВАННАЯ ЦЕНА)", getPrice(), "руб");
++    }
++
++    @Override
++    public boolean isSpecial() {
++        return true;
++    }
++}
+\ No newline at end of file
